@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css"><title>Switch Hub</title></head>
+<body><div class="box center" id="b"></div>
+<script>
+const app = window.SwitchHubApp;
+const connecting = location.search.includes("s=connecting");
+const b = document.getElementById("b");
+if (connecting) {
+  b.innerHTML = `<div class="spin big"></div><p>Connecting to your PC…</p>`;
+} else {
+  b.innerHTML = `<img class="logo" src="logo.png" alt="" style="margin:0 auto">
+    <h1>Can't reach your PC</h1>
+    <p>Check that the PC is on and Switch Hub is running (navy <b>S</b> by the clock). Away from the shop, check that <b>Tailscale</b> is on on this phone.</p>
+    <button class="wide" id="r">Try again</button>
+    <button class="ghost wide" id="s">Change PC address</button>`;
+  document.getElementById("r").onclick = () => app && app.retry();
+  document.getElementById("s").onclick = () => app && app.openSetup();
+}
+</script></body></html>

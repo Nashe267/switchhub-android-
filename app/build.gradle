@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Each GitHub build gets a higher number, so a new APK installs over the old one.
+def buildNo = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
+android {
+    namespace 'za.co.switchgraphics.hub'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'za.co.switchgraphics.hub'
+        minSdk 24
+        targetSdk 34
+        versionCode buildNo
+        versionName "1.0.${buildNo}"
+    }
+
+    signingConfigs {
+        release {
+            // Same key every build, so updates install over the previous version.
+            storeFile file('../switchhub-release.jks')
+            storePassword 'SwitchHubKey2026'
+            keyAlias 'switchhub'
+            keyPassword 'SwitchHubKey2026'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

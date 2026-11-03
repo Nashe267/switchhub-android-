@@ -1,0 +1,45 @@
+name: Build Android app
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build the APK
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Name it
+        run: cp app/build/outputs/apk/release/app-release.apk SwitchHub.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SwitchHub-apk
+          path: SwitchHub.apk
+
+      - name: Publish as a release (download it on your phone)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.${{ github.run_number }}"
+          gh release create "$TAG" SwitchHub.apk \
+            --title "Switch Hub for Android $TAG" \
+            --notes "On your Android phone: tap SwitchHub.apk below to download, then open it and tap Install." \
+            --latest

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css"><title>Connect</title></head>
+<body><div class="box">
+  <img class="logo" src="logo.png" alt="">
+  <h1>Connect to your PC</h1>
+  <p>Switch Hub runs on your PC. On the shop Wi-Fi, your PC shows up here by itself. Tap it to connect.</p>
+
+  <h2>On this Wi-Fi</h2>
+  <div id="found"></div>
+  <div class="scan" id="scan"><div class="spin"></div>Looking for Switch Hub on this Wi-Fi…</div>
+
+  <h2>Or type the PC's address</h2>
+  <div class="row"><input id="addr" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="e.g. 192.168.1.20"><button id="go">Connect</button></div>
+  <div class="err" id="err"></div>
+  <p class="tip" style="margin-top:6px">It's on your PC under <b>Settings › Phone app</b>.</p>
+
+  <div id="savedwrap" style="display:none"><h2>Saved addresses</h2><div id="saved"></div>
+    <button class="ghost wide" id="back">Back to Switch Hub</button></div>
+
+  <div class="tip">Away from the shop: install <b>Tailscale</b> on this phone and on the PC, signed in with the same account. After you connect once on the shop Wi-Fi, the app remembers your PC's Tailscale address and uses it on mobile data by itself.</div>
+</div>
+<script>
+const app = window.SwitchHubApp;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function connect(u) {
+  u = (u || "").trim();
+  if (!u) { document.getElementById("err").textContent = "Type the address shown on your PC."; return; }
+  if (app) app.addAddress(u);
+}
+document.getElementById("go").onclick = () => connect(document.getElementById("addr").value);
+document.getElementById("addr").onkeydown = e => { if (e.key === "Enter") connect(e.target.value); };
+document.getElementById("back").onclick = () => app && app.retry();
+function drawSaved() {
+  const list = app ? JSON.parse(app.getAddresses()) : [];
+  document.getElementById("savedwrap").style.display = list.length ? "" : "none";
+  document.getElementById("saved").innerHTML = list.map(u => `<div class="saved"><span>${esc(u)}</span><button data-u="${esc(u)}">Remove</button></div>`).join("");
+  document.querySelectorAll("[data-u]").forEach(b => b.onclick = () => { app.removeAddress(b.dataset.u); drawSaved(); });
+}
+function drawFound() {
+  const pcs = app ? JSON.parse(app.found()) : [];
+  document.getElementById("found").innerHTML = pcs.map(p => `<button class="pc" data-url="${esc(p.url)}"><div class="ic">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+    <div>${esc(p.name || "Switch Hub PC")}<small>${esc(p.ip)}</small></div><span class="go">Connect ›</span></button>`).join("");
+  document.querySelectorAll("[data-url]").forEach(b => b.onclick = () => connect(b.dataset.url));
+  document.getElementById("scan").lastChild.textContent = pcs.length ? "Still looking for others…" : "Looking for Switch Hub on this Wi-Fi…";
+}
+drawSaved(); drawFound(); setInterval(drawFound, 1200);
+</script>
+</body></html>
